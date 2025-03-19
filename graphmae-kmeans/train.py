@@ -2,7 +2,7 @@ import argparse
 import torch
 from torch_geometric.datasets import Planetoid
 
-from model_kmeans import GraphMAE, get_encoder, get_decoder
+from model import GraphMAE, get_encoder, get_decoder
 
 
 if __name__ == '__main__':
