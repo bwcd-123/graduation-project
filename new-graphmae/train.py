@@ -1,7 +1,9 @@
 import argparse
 import torch
+from torch_geometric.datasets import Planetoid
 
-from model import GAT, GCN, GraphMAE
+from model_kmeans import GraphMAE, get_encoder, get_decoder
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='GraphMAE Training')
@@ -20,3 +22,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     args.middle_list = [int(i) for i in args.middle_list.split(',')]
     args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    dataset = Planetoid(root=args.root, name=args.dataset)
+    data = dataset[0].to(args.device)
+
+    encoder = get_encoder(args).to(args.device)
+    decoder = get_decoder(args).to(args.device)
+    model = GraphMAE(encoder, decoder, mask_ratio=args.mask_ratio).to(args.device)

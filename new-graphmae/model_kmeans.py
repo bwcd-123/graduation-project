@@ -1,7 +1,6 @@
-from functools import partial
 import torch
 import torch.nn as nn
-from torch.nn import BatchNorm1d as BatchNorm
+from torch.nn import BatchNorm1d
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, GATConv, GAE
 
@@ -24,8 +23,40 @@ def get_activation(activation):
 
 
 def get_norm(norm, num_features):
+    """
+    get normalization layer
+
+    Parameters
+    ----------
+    norm : str
+        normalization function
+    num_features : int
+        number of features
+    """
     if norm == 'batchnorm':
-        return BatchNorm(num_features)
+        return BatchNorm1d(num_features)
+    
+
+def get_encoder(args):
+    """
+    get encoder model
+    """
+    if args.encoder == 'gcn':
+        return GCN(args.num_layers, args.fea_list, args.activation, args.norm)
+    elif args.encoder == 'gat':
+        return GAT(args.num_layers, args.fea_list, args.activation, args.norm)
+    else:
+        raise NotImplementedError
+    
+
+def get_decoder(args):
+    """
+    get decoder model
+    """
+    if args.decoder == 'gcn':
+        return GCN(args.num_layers, args.fea_list, args.activation, args.norm)
+    elif args.decoder == 'gat':
+        return GAT(args.num_layers, args.fea_list, args.activation, args.norm)
     else:
         raise NotImplementedError
 
