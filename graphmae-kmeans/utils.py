@@ -6,7 +6,7 @@ def train_one_epoch(model, optimizer, data):
     model.train()
     optimizer.zero_grad()
     encode, decode = model(data.x, data.edge_index)
-    sce_loss = model.get_sce_loss(decode, data.x)
+    loss = model.get_sce_loss(decode, data.x)
     loss.backward()
     optimizer.step()
     return loss.item()
