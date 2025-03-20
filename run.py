@@ -1,7 +1,7 @@
 import os
 import time
 import swanlab
-n = 1  # 设置重复次数
+n = 10  # 设置重复次数
 os.system("conda activate torch")
 
 
@@ -11,4 +11,4 @@ for i in range(n):
     start = time.time()
     os.system("python graphmae-so/train.py --dataset Cora --use_log")
     end = time.time()
-    print(f"current iteration: {i}time cost: {end-start:.4f}")
+    print(f"current iteration: {i}, time cost: {int(end-start)}s")
