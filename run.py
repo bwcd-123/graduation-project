@@ -1,9 +1,8 @@
 import os
 import time
-import swanlab
-n = 10  # 设置重复次数
+n = 100  # 设置重复次数
 os.system("conda activate torch")
-
+import swanlab
 
 swanlab.login(api_key="1REF3sznzagTLaWp98nEZ")
 for i in range(n):
