@@ -1,8 +1,6 @@
-from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score, adjusted_rand_score, homogeneity_score, completeness_score, v_measure_score, accuracy_score
 import torch
 import swanlab
-from datetime import datetime
 
 
 def train_one_epoch(model, optimizer, data):
@@ -63,11 +61,3 @@ def eval(true_labels, cluster_labels):
     print(f"Completeness: {completeness:.4f}")
     print(f"V-Measure: {v_measure:.4f}")
     return acc, ari_score, nmi_score, homogeneity, completeness, v_measure
-
-
-def get_datetime():
-    # 获取当前日期和时间
-    now = datetime.now()
-    # 格式化日期和时间
-    date_str = now.strftime("%m%d-%H%M%S")
-    return date_str

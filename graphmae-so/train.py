@@ -4,7 +4,7 @@ from torch_geometric.datasets import Planetoid
 import swanlab
 
 from model import GraphMAE, get_encoder, get_decoder, get_optimizer
-from utils import train, eval, predict, get_datetime
+from utils import train, eval, predict
 
 
 if __name__ == '__main__':
@@ -33,7 +33,6 @@ if __name__ == '__main__':
     if args.use_log:
         swanlab.init(
             project=f'graphmae-self-optimizing-{args.dataset}',
-            experiment_name=get_datetime(),
             config=vars(args),
             mode='cloud'
         )
