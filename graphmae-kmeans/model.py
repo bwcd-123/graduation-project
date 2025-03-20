@@ -42,9 +42,9 @@ def get_encoder(args):
     get encoder model
     """
     if args.encoder == 'gcn':
-        return GCN(args.num_layers, args.fea_list, args.activation, args.norm)
+        return GCN(args.layer_de, args.features, args.encode_size, args.middle, args.activation, args.norm)
     elif args.encoder == 'gat':
-        return GAT(args.num_layers, args.fea_list, args.activation, args.norm)
+        return GAT(args.layer_de, args.features, args.encode_size, args.middle, args.activation, args.norm)
     else:
         raise NotImplementedError
     
@@ -54,15 +54,27 @@ def get_decoder(args):
     get decoder model
     """
     if args.decoder == 'gcn':
-        return GCN(args.num_layers, args.fea_list, args.activation, args.norm)
+        return GCN(args.layer_de, args.encode_size, args.features, args.middle, args.activation, args.norm)
     elif args.decoder == 'gat':
-        return GAT(args.num_layers, args.fea_list, args.activation, args.norm)
+        return GAT(args.layer_de, args.encode_size, args.features, args.middle, args.activation, args.norm)
+    else:
+        raise NotImplementedError
+
+
+def get_optimizer(args, model):
+    """
+    get optimizer
+    """
+    if args.optimizer == 'adam':
+        return torch.optim.Adam(model.parameters(), lr=args.lr)
+    elif args.optimizer == 'sgd':
+        return torch.optim.SGD(model.parameters(), lr=args.lr)
     else:
         raise NotImplementedError
 
 
 class GCN(nn.Module):
-    def __init__(self, num_layers, fea_list, activation='leakyrelu', norm=None, *args, **kwargs):
+    def __init__(self, num_layers, input, output, middle=None, activation='leakyrelu', norm=None, *args, **kwargs):
         """
         create a GCN model
 
@@ -70,8 +82,12 @@ class GCN(nn.Module):
         ----------
         num_layers : int
             number of layers
-        fea_list : list
-            list of feature size for each layer
+        input : int
+            input dim
+        middle : int
+            middle dim
+        output : int
+            output dim
         activation : str
             activation function
         norm : str
@@ -82,15 +98,23 @@ class GCN(nn.Module):
             arguments for normalization function
         """
         super(GCN, self).__init__(*args, **kwargs)
-        self.convs = nn.ModuleList()
-        for i in range(num_layers):
-            if i != 0:
+        if num_layers == 1:
+            self.convs = nn.ModuleList()
+            self.convs.append(
+                GCNConv(input, output))
+        else:
+            self.convs = nn.ModuleList()
+            fea_list = [input] + [middle] * (num_layers-1) + [output]
+            for i in range(num_layers):
                 act_norm = nn.Sequential()
-                if norm is not None:
-                    act_norm.append(get_norm(norm, num_features=fea_list[i]))
-                act_norm.append(get_activation(activation))
+                if norm is not None and i != 0:
+                    act_norm.append(
+                        get_norm(norm, num_features=middle))
+                act_norm.append(
+                    get_activation(activation))
                 self.convs.append(act_norm)
-            self.convs.append(GCNConv(fea_list[i], fea_list[i+1]))
+                self.convs.append(
+                    GCNConv(fea_list[i], fea_list[i+1]))
         
     def forward(self, x, edge_index):
         for i in range(len(self.convs)):
@@ -101,7 +125,7 @@ class GCN(nn.Module):
         return x
 
 class GAT(nn.Module):
-    def __init__(self, num_layers, fea_list, activation='leakyrelu', norm=None, *args, **kwargs):
+    def __init__(self, num_layers, input, output, middle=None, activation='leakyrelu', norm=None, *args, **kwargs):
         """
         create a GAT model
 
@@ -109,8 +133,12 @@ class GAT(nn.Module):
         ----------
         num_layers : int
             number of layers
-        fea_list : list
-            list of feature size for each layer
+        input : int
+            input dim
+        middle : int
+            middle dim
+        output : int
+            output dim
         activation : str
             activation function
         norm : str
@@ -121,16 +149,25 @@ class GAT(nn.Module):
             arguments for normalization function
         """
         super(GAT, self).__init__(*args, **kwargs)
-        self.convs = nn.ModuleList()
-        for i in range(num_layers):
-            if i != 0:
-                act_norm = nn.Sequential()
-                if norm is not None:
-                    act_norm.append(get_norm(norm, fea_list[i]))
-                act_norm.append(get_activation(activation))
-                self.convs.append(act_norm)
-            self.convs.append(GATConv(fea_list[i], fea_list[i+1]))
-        
+        if num_layers == 1:
+            self.convs = nn.ModuleList()
+            self.convs.append(
+                GATConv(input, output))
+        else:
+            self.convs = nn.ModuleList()
+            fea_list = [input] + [middle] * (num_layers-1) + [output]
+            for i in range(num_layers):
+                if i != 0:
+                    act_norm = nn.Sequential()
+                    if norm is not None:
+                        act_norm.append(
+                            get_norm(norm, num_features=middle))
+                    act_norm.append(
+                        get_activation(activation))
+                    self.convs.append(act_norm)
+                self.convs.append(
+                    GATConv(fea_list[i], fea_list[i+1]))
+
     def forward(self, x, edge_index):
         for i in range(len(self.convs)):
             if i % 2 == 0:
