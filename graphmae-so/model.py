@@ -106,13 +106,14 @@ class GCN(nn.Module):
             self.convs = nn.ModuleList()
             fea_list = [input] + [middle] * (num_layers-1) + [output]
             for i in range(num_layers):
-                act_norm = nn.Sequential()
-                if norm is not None and i != 0:
+                if i != 0:
+                    act_norm = nn.Sequential()
+                    if norm is not None:
+                        act_norm.append(
+                            get_norm(norm, num_features=middle))
                     act_norm.append(
-                        get_norm(norm, num_features=middle))
-                act_norm.append(
-                    get_activation(activation))
-                self.convs.append(act_norm)
+                        get_activation(activation))
+                    self.convs.append(act_norm)
                 self.convs.append(
                     GCNConv(fea_list[i], fea_list[i+1]))
         
