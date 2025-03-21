@@ -68,9 +68,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='train',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--name', type=str, default='Citeseer')
+    parser.add_argument('--name', type=str, default='Cora')
     parser.add_argument('--epoch', type=int, default=30)
-    parser.add_argument('--max_epoch', type=int, default=1)
+    parser.add_argument('--max_epoch', type=int, default=100)
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--n_clusters', default=6, type=int)
     parser.add_argument('--update_interval', default=1, type=int)  # [1,3,5]
@@ -81,11 +81,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args.seed = torch.default_generator.seed()
     args.cuda = torch.cuda.is_available()
-    swanlab.init(
-        project=f"daegc-{args.name}",
-        config=vars(args),
-        mode='cloud'
-    )
     print("use cuda: {}".format(args.cuda))
     device = torch.device("cuda" if args.cuda else "cpu")
 
@@ -93,11 +88,11 @@ if __name__ == "__main__":
     dataset = datasets[0]
 
     if args.name == 'Citeseer':
-      args.lr = 0.0001
+      args.lr = 0.001
       args.k = None
       args.n_clusters = 6
     elif args.name == 'Cora':
-      args.lr = 0.0001
+      args.lr = 0.001
       args.k = None
       args.n_clusters = 7
     elif args.name == "Pubmed":
@@ -106,7 +101,12 @@ if __name__ == "__main__":
         args.n_clusters = 3
     else:
         args.k = None
-    
+        
+    swanlab.init(
+        project=f"daegc-{args.name}",
+        config=vars(args),
+        mode='cloud'
+    )
     
     args.pretrain_path = f'./pretrain/predaegc_{args.name}_{args.epoch}.pkl'
     args.input_dim = dataset.num_features

@@ -8,7 +8,7 @@ from model import StackedEncoder
 from utils import pretrain_layers, fine_tune, eval
 
 data_root = '../dataset'
-data_name = 'cora'
+data_name = 'Cora'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 dataset = Planetoid(root=data_root, name=data_name)
 data = dataset[0].to(device)  # 将数据移到设备
