@@ -1,18 +1,19 @@
 import os
 import multiprocessing as mp
 n = 100  # 设置重复次数
+num_process = 1
 import swanlab
 
 swanlab.login(api_key="1REF3sznzagTLaWp98nEZ")
 
 def task():
     for i in range(n):
-        os.system("python DAEGC/daegc.py")
+        os.system("python DAEGC/pretrain.py")
 
 if __name__ == "__main__":
     # 创建 4 个进程
     processes = []
-    for i in range(4):
+    for i in range(num_process):
         p = mp.Process(target=task)
         processes.append(p)
         p.start()

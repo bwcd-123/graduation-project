@@ -9,10 +9,43 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
 from torch.optim import Adam
+import os
+import shutil
 
 import utils
 from model import GAT
 from evaluation import eva
+
+
+def delete_files_except(folder_path, files_to_keep):
+    # 遍历文件夹中的所有文件和文件夹
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        
+        # 如果是文件且不在保留列表中，则删除
+        if os.path.isfile(file_path) and filename not in files_to_keep:
+            os.remove(file_path)
+            print(f"Deleted: {file_path}")
+
+
+def move_and_rename_file(source_path, destination_folder, new_name):
+    """
+    将文件移动到目标文件夹并重命名。
+
+    :param source_path: 源文件的完整路径
+    :param destination_folder: 目标文件夹的路径
+    :param new_name: 文件的新名称（包括扩展名）
+    """
+    # 确保目标文件夹存在，如果不存在则创建
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder)
+
+    # 构建目标文件的完整路径
+    destination_path = os.path.join(destination_folder, new_name)
+
+    # 移动并重命名文件
+    shutil.move(source_path, destination_path)
+    print(f"Moved and renamed: {source_path} -> {destination_path}")
 
 
 def pretrain(dataset):
@@ -34,7 +67,7 @@ def pretrain(dataset):
     # data and label
     x = torch.Tensor(dataset.x).to(device)
     y = dataset.y.cpu().numpy()
-    best_acc, best_nmi, best_ari, best_f1 = 0.0, 0.0, 0.0, 0.0
+    best_acc, best_nmi, best_ari, best_f1, best_epoch = 0.0, 0.0, 0.0, 0.0, 0
 
     for epoch in range(args.max_epoch):
         model.train()
@@ -56,12 +89,15 @@ def pretrain(dataset):
                     best_nmi = nmi
                     best_ari = ari
                     best_f1 = f1
-        # if epoch % 5 == 0:
-            # torch.save(
-            #     model.state_dict(), f"./pretrain/predaegc_{args.name}_{epoch}.pkl"
-            # )
+                    best_epoch = epoch+1
+                if not os.path.exists("./DAEGC/pretrain"):
+                    os.makedirs("./DAEGC/pretrain")
+                torch.save(
+                    model.state_dict(), f"./DAEGC/pretrain/predaegc_{args.name}_{epoch+1}.pkl"
+                )
     print("best_acc: {:.4f}, best_nmi: {:.4f}, best_ari: {:.4f}, best_f1: {:.4f}".format(best_acc, best_nmi, best_ari, best_f1))
-
+    delete_files_except("./DAEGC/pretrain/", [f"predaegc_{args.name}_{best_epoch}.pkl"])
+    move_and_rename_file(f"./DAEGC/pretrain/predaegc_{args.name}_{best_epoch}.pkl", "./DAEGC/save", f"a{best_acc:.4f}n{best_nmi:.4f}r{best_ari:.4f}.pkl")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -90,7 +126,7 @@ if __name__ == "__main__":
         args.k = None
         args.n_clusters = 6
     elif args.name == "Cora":
-        args.lr = 0.005
+        args.lr = 0.001
         args.k = None
         args.n_clusters = 7
     elif args.name == "Pubmed":
