@@ -8,7 +8,7 @@ swanlab.login(api_key="1REF3sznzagTLaWp98nEZ")
 
 def task():
     for i in range(n):
-        os.system("python DAEGC/pretrain.py")
+        os.system("python vgae/train.py --dataset Citeseer")
 
 if __name__ == "__main__":
     # 创建 4 个进程
