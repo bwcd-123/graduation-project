@@ -14,6 +14,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, VGAE
 from sklearn.cluster import KMeans
 from sklearn.metrics import normalized_mutual_info_score, adjusted_rand_score, homogeneity_score, completeness_score, v_measure_score, accuracy_score
+import swanlab
 
 
 # 定义 GCN 编码器
@@ -57,8 +58,9 @@ class VGAEModel(torch.nn.Module):
             loss = loss + (1 / data.num_nodes) * self.vgae.kl_loss()
             loss.backward()
             optimizer.step()
-            if (epoch+1) % 10 == 0:
-                print(f'Epoch: {epoch+1}, Loss: {loss:.4f}')
+            swanlab.log({"loss": loss.item()})
+            # if (epoch+1) % 10 == 0:
+            #     print(f'Epoch: {epoch+1}, Loss: {loss:.4f}')
 
     def evaluate(self, data):
         """
@@ -67,7 +69,6 @@ class VGAEModel(torch.nn.Module):
         self.eval()
         with torch.no_grad():
             z = self.encode(data.x, data.edge_index)
-            print("z: ", z.shape)
         return z
 
 def kmeans(embeddings, k):
