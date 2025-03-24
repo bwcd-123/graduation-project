@@ -32,27 +32,19 @@ def trainer(dataset):
     data = torch.Tensor(dataset.x).to(device)
     y = dataset.y.cpu().numpy()
 
-    with torch.no_grad():
-        _, z = model.gat(data, adj, M)
-
-    # get kmeans and pretrain cluster result
+    # get kmeans and pretrain cluster resul t
     kmeans = KMeans(n_clusters=args.n_clusters, n_init=20)
-    y_pred = kmeans.fit_predict(z.data.cpu().numpy())
     model.cluster_layer.data = torch.tensor(kmeans.cluster_centers_).to(device)
-    eva(y, y_pred, 'pretrain')
 
     for epoch in range(args.max_epoch):
         model.train()
-        if epoch % args.update_interval == 0:
-            # update_interval
-            A_pred, z, Q = model(data, adj, M)
-            
-            q = Q.detach().data.cpu().numpy().argmax(1)  # Q
-            acc, nmi, ari, f1 = eva(y, q, epoch)
-            swanlab.log({"acc": acc, "nmi": nmi, "ari": ari, "f1": f1})
-
         A_pred, z, q = model(data, adj, M)
-        p = target_distribution(Q.detach())
+        if epoch % args.update_interval == 0:
+            # update_interval            
+            Q = q.detach().data.cpu().numpy().argmax(1)  # Q
+            acc, nmi, ari, f1 = eva(y, Q, epoch)
+            swanlab.log({"acc": acc, "nmi": nmi, "ari": ari, "f1": f1})
+        p = target_distribution(q.detach())
 
         kl_loss = F.kl_div(q.log(), p, reduction='batchmean')
         re_loss = F.binary_cross_entropy(A_pred.view(-1), adj_label.view(-1))
@@ -64,11 +56,12 @@ def trainer(dataset):
         loss.backward()
         optimizer.step()
 
+# DAEGC/daegc.py --name Pubmed --max_epoch 10
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='train',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--name', type=str, default='Cora')
+    parser.add_argument('--name', type=str, default='Pubmed')
     parser.add_argument('--epoch', type=int, default=30)
     parser.add_argument('--max_epoch', type=int, default=100)
     parser.add_argument('--lr', type=float, default=0.0001)
@@ -83,6 +76,7 @@ if __name__ == "__main__":
     args.cuda = torch.cuda.is_available()
     print("use cuda: {}".format(args.cuda))
     device = torch.device("cuda" if args.cuda else "cpu")
+    # device = "cpu"
 
     datasets = utils.get_dataset(args.name)
     dataset = datasets[0]

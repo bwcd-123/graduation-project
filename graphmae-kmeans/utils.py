@@ -17,7 +17,7 @@ def train_one_epoch(model, optimizer, data):
 def train(model, optimizer, data, args):
     for epoch in range(args.epochs):
         loss = train_one_epoch(model, optimizer, data)
-        if args.use_log:
+        if not args.no_log:
             swanlab.log({'loss':loss})
         if (epoch+1) % 10 == 0:
             print(f"Epoch {epoch+1}/{args.epochs}, Loss: {loss:.4f}")
@@ -26,7 +26,7 @@ def train(model, optimizer, data, args):
                 encode, _ = model(data.x, data.edge_index)
                 cluster_labels = kmeans(encode, k=7)
                 acc, ari_score, nmi_score, homogeneity, completeness, v_measure = eval(data.y, cluster_labels)
-                if args.use_log:
+                if not args.no_log:
                     swanlab.log({'acc':acc, 'ari_score':ari_score, 'nmi_score':nmi_score, 'homogeneity':homogeneity, 'completeness':completeness, 'v_measure':v_measure}, step=epoch)
 
 
